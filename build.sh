@@ -2,26 +2,49 @@
 # Exit on error
 set -o errexit
 
-# Debug: show current directory and files
+echo "=== Starting build process ==="
 echo "Current directory: $(pwd)"
-echo "Files in current directory:"
+echo "Python version: $(python --version)"
+echo "Pip version: $(pip --version)"
+
+echo "=== File structure ==="
 ls -la
 
-# Check if manage.py exists
-if [ ! -f "manage.py" ]; then
-    echo "ERROR: manage.py not found in current directory!"
-    echo "Looking for manage.py..."
+echo "=== Checking for manage.py ==="
+if [ -f "manage.py" ]; then
+    echo "✓ manage.py found in current directory"
+else
+    echo "✗ manage.py NOT found in current directory"
+    echo "Searching for manage.py..."
     find . -name "manage.py" -type f
     exit 1
 fi
 
-# Install dependencies (already done in Dockerfile, but keep for Render)
+echo "=== Installing dependencies ==="
 pip install -r requirements.txt
 
-# Collect static files
+echo "=== Checking Django configuration ==="
+python -c "
+import django
+from django.conf import settings
+print('Django version:', django.__version__)
+try:
+    print('DEBUG:', settings.DEBUG)
+    print('ALLOWED_HOSTS:', settings.ALLOWED_HOSTS)
+    print('Database:', settings.DATABASES['default']['ENGINE'])
+    print('✓ Django settings are valid')
+except Exception as e:
+    print('✗ Django settings error:', e)
+    exit(1)
+"
+
+echo "=== Collecting static files ==="
 python manage.py collectstatic --no-input
 
-# Apply database migrations
+echo "=== Making migrations ==="
+python manage.py makemigrations
+
+echo "=== Applying migrations ==="
 python manage.py migrate
 
-echo "Build completed successfully!"
+echo "=== Build completed successfully! ==="

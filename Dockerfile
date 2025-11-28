@@ -15,12 +15,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . .
 
-# Debug: list files to see structure
+# Debug structure
 RUN ls -la
+RUN find . -name "manage.py" -type f
 
-# Run build script
-RUN chmod +x build.sh
-RUN ./build.sh
+# Build steps directly in Dockerfile
+RUN python manage.py collectstatic --no-input
+RUN python manage.py makemigrations
+RUN python manage.py migrate
 
 # Expose port
 EXPOSE $PORT
