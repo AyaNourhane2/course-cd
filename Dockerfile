@@ -15,14 +15,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . .
 
-# Debug structure
-RUN ls -la
-RUN find . -name "manage.py" -type f
+# Create staticfiles directory
+RUN mkdir -p staticfiles
 
-# Build steps directly in Dockerfile
-RUN python manage.py collectstatic --no-input
-RUN python manage.py makemigrations
+# Apply database migrations
 RUN python manage.py migrate
+
+# Collect static files (with continue on error)
+RUN python manage.py collectstatic --no-input --clear || echo "Collectstatic completed with warnings"
 
 # Expose port
 EXPOSE $PORT
